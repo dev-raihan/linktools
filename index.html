@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OpenApp | Smart Deep Link Generator</title>
+    <meta name="description" content="Generate smart links that bypass in-app browsers and open directly in native apps.">
+    <meta name="theme-color" content="#0f0f0f">
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --surface: #1a1a1a;
+            --surface-hover: #252525;
+            --border: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a1;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --success: #10b981;
+            --error: #ef4444;
+            --radius: 12px;
+            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            font-family: var(--font);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* --- Utilities --- */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; display: flex; flex-direction: column; }
+        
+        /* --- Typography --- */
+        h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin: 0 0 8px 0; background: linear-gradient(to right, #fff, #a1a1a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 18px; font-weight: 600; margin: 0 0 16px 0; }
+        p { font-size: 15px; line-height: 1.5; color: var(--text-secondary); margin: 0 0 16px 0; }
+        .sub-text { font-size: 13px; color: var(--text-secondary); }
+
+        /* --- Components --- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s var(--ease);
+        }
+
+        .input-group { position: relative; width: 100%; margin-bottom: 20px; }
+        
+        input[type="text"] {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 16px;
+            padding-left: 48px;
+            border-radius: var(--radius);
+            font-size: 16px;
+            transition: all 0.2s var(--ease);
+        }
+        
+        input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            width: 20px;
+            height: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            border-radius: var(--radius);
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s var(--ease), opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        
+        .btn-secondary {
+            background: var(--surface-hover);
+            color: white;
+            border: 1px solid var(--border);
+        }
+
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .result-box {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 16px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .copy-feedback {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: var(--success);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        /* --- Redirect View Specifics --- */
+        .redirect-loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .app-icon-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px auto;
+            border: 1px solid var(--border);
+        }
+
+        .app-icon-large svg { width: 40px; height: 40px; fill: white; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #444;
+        }
+
+        /* --- Icon SVGs --- */
+        svg { fill: currentColor; }
+    </style>
+</head>
+<body>
+
+    <div id="view-generator" class="container">
+        <div style="margin-top: 40px; margin-bottom: 40px;">
+            <div class="flex-center" style="width: 40px; height: 40px; background: var(--accent); border-radius: 10px; margin-bottom: 16px;">
+                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h1>Smart Link Generator</h1>
+            <p>Paste a link from any major platform. We'll generate a smart link that opens specifically in the native app, bypassing in-app browsers.</p>
+        </div>
+
+        <div class="card">
+            <div class="input-group">
+                <div class="input-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg>
+                </div>
+                <input type="text" id="urlInput" placeholder="Paste YouTube, Insta, X link..." autocomplete="off">
+            </div>
+            
+            <div id="platform-detector" class="hidden" style="margin-bottom: 16px;">
+                <span id="detected-badge" class="platform-badge">
+                    </span>
+            </div>
+
+            <button id="generateBtn" class="btn-primary" onclick="app.generate()">
+                Create Smart Link
+            </button>
+        </div>
+
+        <div id="result-card" class="card hidden">
+            <h2>Your Smart Link</h2>
+            <div class="result-box" id="result-url" onclick="app.copyToClipboard()">
+                https://...
+                <span class="copy-feedback" id="copy-msg">COPIED</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="app.copyToClipboard()">Copy</button>
+                <button class="btn-primary" onclick="app.testLink()">Test Open</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>100% Client-Side. No Tracking. No Ads.<br>Supports iOS & Android.</p>
+        </footer>
+    </div>
+
+    <div id="view-redirect" class="container hidden" style="justify-content: center; text-align: center;">
+        <div class="app-icon-large" id="redirect-icon">
+            </div>
+        
+        <h1 id="redirect-title">Opening App...</h1>
+        <p id="redirect-desc">Hold on tight. We are moving you to the app.</p>
+
+        <div class="redirect-loader" id="loader"></div>
+
+        <button id="manual-open-btn" class="btn-primary" style="margin-bottom: 12px;">
+            Open App Now
+        </button>
+        
+        <button id="fallback-btn" class="btn-secondary" style="background: transparent; border: none; font-weight: normal; font-size: 14px; color: var(--text-secondary);">
+            I don't have the app, continue in browser
+        </button>
+        
+        <div style="margin-top: 30px; font-size: 12px; color: #444; max-width: 300px; margin-left: auto; margin-right: auto;">
+            <p><strong>Note:</strong> On Android, you may see a "Open with" popup. Select the app and choose "Always".</p>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * APP LOGIC
+         * Single File Architecture
+         */
+        
+        // --- Configuration & Regex Library ---
+        const PLATFORMS = {
+            youtube: {
+                name: "YouTube",
+                color: "#ff0000",
+                regex: /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})|youtube\.com\/shorts\/([a-zA-Z0-9_-]+)|youtube\.com\/(?:c\/|channel\/|user\/|@)([a-zA-Z0-9_-]+)/,
+                scheme: (url) => `vnd.youtube://${url.replace(/^https?:\/\//, '')}`,
+                package: "com.google.android.youtube",
+                icon: '<path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>'
+            },
+            instagram: {
+                name: "Instagram",
+                color: "#E1306C",
+                regex: /(?:instagram\.com|instagr\.am)\/(p|reel|tv|stories|u|[a-zA-Z0-9_.]+)/,
+                // Modern Android Intent handles generic URL better than specific schemes for reliability
+                scheme: (url) => `instagram://item?url=${url}`, 
+                package: "com.instagram.android",
+                icon: '<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>'
+            },
+            twitter: {
+                name: "X / Twitter",
+                color: "#ffffff",
+                regex: /(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/,
+                scheme: (url) => `twitter://status?url=${url}`, // Fallback mostly
+                package: "com.twitter.android",
+                icon: '<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>'
+            },
+            facebook: {
+                name: "Facebook",
+                color: "#1877F2",
+                regex: /(?:facebook\.com|fb\.watch)\/.+/,
+                scheme: (url) => `fb://facewebmodal/f?href=${url}`,
+                package: "com.facebook.katana",
+                icon: '<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>'
+            },
+            spotify: {
+                name: "Spotify",
+                color: "#1DB954",
+                regex: /(?:open\.spotify\.com|spotify\.link)\/(track|album|artist|playlist|episode)\/([a-zA-Z0-9]+)/,
+                scheme: (url) => url.replace('https://open.spotify.com', 'spotify').replace('/', ':'),
+                package: "com.spotify.music",
+                icon: '<path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>'
+            },
+            linkedin: {
+                name: "LinkedIn",
+                color: "#0a66c2",
+                regex: /linkedin\.com\/(?:in|posts|feed|jobs)\/.+/,
+                scheme: (url) => `linkedin://url?url=${encodeURIComponent(url)}`,
+                package: "com.linkedin.android",
+                icon: '<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>'
+            },
+            reddit: {
+                name: "Reddit",
+                color: "#ff4500",
+                regex: /(?:reddit\.com\/r\/|redd\.it\/)/,
+                scheme: (url) => `reddit://${url.replace(/^https?:\/\//, '')}`,
+                package: "com.reddit.frontpage",
+                icon: '<path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>'
+            },
+            telegram: {
+                name: "Telegram",
+                color: "#229ED9",
+                regex: /(?:t\.me|telegram\.me)\/.+/,
+                scheme: (url) => `tg://resolve?domain=${url.split('/').pop()}`,
+                package: "org.telegram.messenger",
+                icon: '<path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>'
+            },
+            whatsapp: {
+                name: "WhatsApp",
+                color: "#25D366",
+                regex: /(?:wa\.me|whatsapp\.com)\/.+/,
+                scheme: (url) => `whatsapp://send?text=${encodeURIComponent(url)}`,
+                package: "com.whatsapp",
+                icon: '<path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.658-.698c.969.587 2.029.931 3.109.931h.001c3.182 0 5.768-2.586 5.768-5.766.001-3.182-2.585-5.769-5.767-5.769H12.031zM12 2C6.48 2 2 6.48 2 12c0 1.766.458 3.425 1.267 4.881l-1.383 5.045 5.176-1.357C8.423 21.353 10.154 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/>'
+            },
+            amazon: {
+                name: "Amazon",
+                color: "#ff9900",
+                regex: /(?:amazon\.|amzn\.)[a-z\.]{2,6}\/.+/,
+                scheme: (url) => `com.amazon.mobile.shopping.web://?url=${url}`,
+                package: "com.amazon.mShop.android.shopping",
+                icon: '<path d="M13.2 21.365c-3.483 0-6.702-1.002-8.508-2.285-.357-.254-.384-.716-.062-1.071l1.109-1.157c.28-.316.745-.333 1.096-.062 1.503 1.107 3.868 1.83 6.143 1.83 2.91 0 4.673-.915 4.673-2.316 0-1.282-1.424-1.92-3.882-2.532-4.14-.98-6.176-2.617-6.176-5.063 0-2.887 2.766-4.985 6.643-4.985 2.787 0 4.904.755 6.488 1.932.35.257.37.712.062 1.054l-1.049 1.166c-.288.318-.755.334-1.107.062-1.246-.948-2.924-1.467-4.526-1.467-2.66 0-4.174.965-4.174 2.227 0 1.343 1.574 1.884 4.09 2.518 4.237 1.021 5.968 2.706 5.968 5.1 0 3.097-2.923 4.985-6.864 4.985h-.065zM22.032 20.84c-.39-.42-1.055-.39-1.428.056-.837.999-1.905 1.535-2.731 1.637-.417.051-.625.567-.328.877.925.965 2.736 1.127 4.398-.636.316-.334.331-.837.039-1.254-.031-.055.021.031.05-.011z"/>'
+            },
+            default: {
+                name: "Web Link",
+                color: "#777777",
+                regex: /.*/,
+                scheme: (url) => url,
+                package: "",
+                icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>'
+            }
+        };
+
+        const App = {
+            currentUrl: '',
+            detectedPlatform: null,
+            mode: 'generate', // 'generate' or 'redirect'
+
+            init: function() {
+                const params = new URLSearchParams(window.location.search);
+                const target = params.get('u');
+
+                if (target) {
+                    this.mode = 'redirect';
+                    this.currentUrl = this.decode(target);
+                    this.renderRedirect();
+                    this.executeRedirect();
+                } else {
+                    this.mode = 'generate';
+                    this.bindEvents();
+                }
+            },
+
+            // --- Utilities ---
+            encode: function(str) {
+                return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            },
+
+            decode: function(str) {
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (str.length % 4) str += '=';
+                return atob(str);
+            },
+
+            getPlatform: function(url) {
+                for (const key in PLATFORMS) {
+                    if (key === 'default') continue;
+                    if (PLATFORMS[key].regex.test(url)) return { key, ...PLATFORMS[key] };
+                }
+                return { key: 'default', ...PLATFORMS['default'] };
+            },
+
+            getOS: function() {
+                const ua = navigator.userAgent || navigator.vendor || window.opera;
+                if (/android/i.test(ua)) return 'android';
+                if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'ios';
+                return 'desktop';
+            },
+
+            // --- Generator Mode ---
+            bindEvents: function() {
+                const input = document.getElementById('urlInput');
+                input.addEventListener('input', (e) => this.handleInput(e.target.value));
+            },
+
+            handleInput: function(url) {
+                this.currentUrl = url.trim();
+                const badge = document.getElementById('detected-badge');
+                const detector = document.getElementById('platform-detector');
+
+                if (!this.currentUrl) {
+                    detector.classList.add('hidden');
+                    return;
+                }
+
+                const platform = this.getPlatform(this.currentUrl);
+                this.detectedPlatform = platform;
+                
+                badge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24">${platform.icon}</svg> ${platform.name}`;
+                badge.style.color = platform.color;
+                detector.classList.remove('hidden');
+            },
+
+            generate: function() {
+                if (!this.currentUrl) return;
+
+                // Validate URL basic structure
+                if (!/^https?:\/\//i.test(this.currentUrl)) {
+                    this.currentUrl = 'https://' + this.currentUrl;
+                }
+
+                const encoded = this.encode(this.currentUrl);
+                const fullUrl = `${window.location.origin}${window.location.pathname}?u=${encoded}`;
+                
+                document.getElementById('result-url').innerHTML = fullUrl + '<span class="copy-feedback" id="copy-msg">COPIED</span>';
+                document.getElementById('result-card').classList.remove('hidden');
+                
+                // Scroll to result
+                document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
+            },
+
+            copyToClipboard: function() {
+                const text = document.getElementById('result-url').innerText.replace('COPIED', '');
+                navigator.clipboard.writeText(text).then(() => {
+                    const msg = document.getElementById('copy-msg');
+                    msg.style.opacity = '1';
+                    setTimeout(() => msg.style.opacity = '0', 2000);
+                });
+            },
+
+            testLink: function() {
+                const text = document.getElementById('result-url').innerText.replace('COPIED', '');
+                window.open(text, '_blank');
+            },
+
+            // --- Redirect Mode ---
+            renderRedirect: function() {
+                document.getElementById('view-generator').classList.add('hidden');
+                document.getElementById('view-redirect').classList.remove('hidden');
+                
+                const platform = this.getPlatform(this.currentUrl);
+                document.getElementById('redirect-icon').innerHTML = `<svg viewBox="0 0 24 24">${platform.icon}</svg>`;
+                document.getElementById('redirect-icon').style.color = platform.color;
+                document.getElementById('redirect-title').innerText = `Opening ${platform.name}`;
+                
+                document.getElementById('fallback-btn').onclick = () => {
+                    window.location.href = this.currentUrl;
+                };
+            },
+
+            executeRedirect: function() {
+                const platform = this.getPlatform(this.currentUrl);
+                const os = this.getOS();
+                let deepLink = '';
+
+                // Strategy Construction
+                if (os === 'android') {
+                    // Android Intent Strategy (Most Robust)
+                    const cleanScheme = platform.scheme(this.currentUrl);
+                    // Extract Scheme part for intent
+                    let schemePart = cleanScheme.split(':')[0];
+                    let urlPart = cleanScheme;
+
+                    if(platform.key === 'default') {
+                        window.location.href = this.currentUrl;
+                        return;
+                    }
+
+                    // Intent Syntax
+                    // intent://<URL_PATH>#Intent;scheme=<SCHEME>;package=<PACKAGE>;S.browser_fallback_url=<ORIGINAL_URL>;end
+                    
+                    // Special handling for clean intent construction
+                    let intentUri = '';
+                    
+                    if (platform.key === 'youtube') {
+                        // YouTube works best with direct vnd.youtube launch or intent on URL
+                        // intent://<video_id>#Intent;scheme=vnd.youtube;...
+                         // Regex extraction for ID done simply here:
+                         const vidIdMatch = this.currentUrl.match(/(?:v=|youtu\.be\/|\/shorts\/)([^"&?\/\s]{11})/);
+                         const vidId = vidIdMatch ? vidIdMatch[1] : '';
+                         if(vidId) {
+                             intentUri = `intent://${vidId}#Intent;scheme=vnd.youtube;package=${platform.package};S.browser_fallback_url=${encodeURIComponent(this.currentUrl)};end`;
+                         } else {
+                             // Fallback to generic intent
+                             intentUri = `intent://${this.currentUrl.replace(/^https?:\/\//, '')}#Intent;package=${platform.package};scheme=https;S.browser_fallback_url=${encodeURIComponent(this.currentUrl)};end`;
+                         }
+                    } else {
+                         // Generic Android Intent for App Links
+                         // We strip https:// and put it in the path, set scheme to https, and specify package.
+                         // This forces the specific app to handle the web URL.
+                         const cleanPath = this.currentUrl.replace(/^https?:\/\//, '');
+                         intentUri = `intent://${cleanPath}#Intent;package=${platform.package};scheme=https;S.browser_fallback_url=${encodeURIComponent(this.currentUrl)};end`;
+                    }
+                    
+                    deepLink = intentUri;
+
+                } else if (os === 'ios') {
+                    // iOS Strategy: Custom Scheme -> Fallback
+                    // Note: iOS often blocks auto-redirects in IAB. Button is vital.
+                    deepLink = platform.scheme(this.currentUrl);
+                    
+                    // Specific iOS overrides if needed
+                    if (platform.key === 'youtube') {
+                        // iOS YouTube often prefers youtube://
+                         const vidIdMatch = this.currentUrl.match(/(?:v=|youtu\.be\/|\/shorts\/)([^"&?\/\s]{11})/);
+                         if(vidIdMatch && vidIdMatch[1]) {
+                             deepLink = `youtube://${vidIdMatch[1]}`;
+                         }
+                    }
+                } else {
+                    // Desktop
+                    window.location.href = this.currentUrl;
+                    return;
+                }
+
+                // Set button action (always reliable)
+                const btn = document.getElementById('manual-open-btn');
+                btn.onclick = function() {
+                    // Store that user initiated action for better tracking
+                    window.userInitiated = true;
+                    window.location.href = deepLink;
+                    // Fallback timeout for if app not installed
+                    setTimeout(() => {
+                         // Only redirect if we haven't blurred (meaning app didn't open)
+                         if(!document.hidden) {
+                             window.location.href = App.currentUrl;
+                         }
+                    }, 2500);
+                };
+
+                // Attempt Auto-Redirect with better handling
+                // Many modern browsers require user interaction for app redirects
+                const manualBtn = document.getElementById('manual-open-btn');
+
+                // For iOS, we especially need user interaction due to strict policies
+                if (os === 'ios') {
+                    // On iOS, auto-redirects often don't work in WKWebView
+                    // Show message and wait for user to click
+                    document.getElementById('redirect-desc').innerText = "Tap the button below to open in the app.";
+                    document.getElementById('loader').style.display = 'none';
+
+                    // Still try auto-redirect as a backup, but with shorter delay
+                    setTimeout(() => {
+                        // Auto-redirect attempt for iOS
+                        window.location.href = deepLink;
+                    }, 100);
+                } else {
+                    // On Android, auto-redirect has better success rate
+                    setTimeout(() => {
+                        window.location.href = deepLink;
+
+                        // Set fallback timer for Android as well
+                        setTimeout(() => {
+                            if (!document.hidden) {
+                                // If page is still visible, app didn't open
+                                document.getElementById('loader').style.display = 'none';
+                                document.getElementById('redirect-desc').innerText = "If the app didn't open, click the button below.";
+                            }
+                        }, 3000);
+                    }, 100); // Reduced delay
+                }
+            }
+        };
+
+        // Start
+        window.app = App;
+        App.init();
+
+    </script>
+</body>
+</html>
