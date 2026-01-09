@@ -10,505 +10,449 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
 
     <style>
         :root {
+            /* Colors */
             --bg-root: #000000;
             --bg-sidebar: #050505;
-            --bg-card: rgba(20, 20, 20, 0.6);
+            --bg-card: rgba(20, 20, 20, 0.7);
+            --bg-card-lighter: rgba(30, 30, 30, 0.7);
             --bg-input: #0f0f0f;
             --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.2);
+            --border-light: rgba(255, 255, 255, 0.15);
             --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #a855f7;
             --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             --primary-glow: rgba(99, 102, 241, 0.4);
             --text-main: #ffffff;
             --text-muted: #9ca3af;
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
+            --success: #10b981;
+            --error: #ef4444;
+            
+            /* Radii */
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            
+            /* Sizing */
             --nav-width: 280px;
             --mobile-nav-height: 70px;
+            --content-max-width: 680px;
+
+            /* Premium Shadow System */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1), 0 8px 32px rgba(99,102,241,0.05);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.12), 0 16px 48px rgba(99,102,241,0.08);
+            --shadow-lg: 0 16px 48px rgba(0,0,0,0.15), 0 24px 64px rgba(99,102,241,0.1);
+            --shadow-glow: 0 0 20px rgba(99,102,241,0.3), 0 0 40px rgba(99,102,241,0.15);
+            --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.2);
         }
 
         [data-theme="light"] {
             --bg-root: #f8f9fa;
             --bg-sidebar: #ffffff;
-            --bg-card: rgba(255, 255, 255, 0.9);
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-card-lighter: rgba(245, 247, 250, 0.9);
             --bg-input: #ffffff;
             --border: rgba(0, 0, 0, 0.1);
-            --border-hover: rgba(0, 0, 0, 0.2);
+            --border-light: rgba(0, 0, 0, 0.15);
             --text-main: #1a1a1a;
             --text-muted: #6b7280;
+            --primary-glow: rgba(99, 102, 241, 0.2);
+
+            /* Light Mode Shadows */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.05), 0 8px 16px rgba(99,102,241,0.03);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08), 0 16px 32px rgba(99,102,241,0.05);
+            --shadow-inner: inset 0 1px 3px rgba(0,0,0,0.05);
         }
 
+        /* Reset & Base */
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
         body {
             margin: 0; padding: 0;
             background-color: var(--bg-root);
             color: var(--text-main);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            height: 100vh;
-            overflow: hidden;
+            height: 100vh; overflow: hidden;
             display: flex;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-size: 16px;
         }
 
+        /* Ambient Background */
         .ambient-glow {
-            position: fixed;
-            top: -20%; left: -20%;
-            width: 140vw; height: 140vh;
-            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08), transparent 60%);
-            z-index: -1;
-            pointer-events: none;
-            animation: pulseGlow 10s ease-in-out infinite alternate;
+            position: fixed; top: -20%; left: -20%; width: 140vw; height: 140vh;
+            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.12), transparent 65%);
+            z-index: -1; pointer-events: none;
+            animation: pulseGlow 12s ease-in-out infinite alternate;
         }
-        @keyframes pulseGlow { from { opacity: 0.5; transform: scale(1); } to { opacity: 0.8; transform: scale(1.1); } }
+        @keyframes pulseGlow { from { opacity: 0.6; transform: scale(1); } to { opacity: 0.9; transform: scale(1.1); } }
 
+        /* Layout */
         #app-layout { display: flex; width: 100%; height: 100%; }
-
-        .sidebar {
-            width: var(--nav-width);
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 30px 20px;
-            z-index: 50;
+        .main-content { flex: 1; position: relative; display: flex; flex-direction: column; }
+        .scroll-area {
+            flex: 1; overflow-y: auto; padding: 40px; padding-bottom: 150px;
+            scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
         }
 
+        /* Typography */
+        h1 { font-size: clamp(24px, 3vw, 32px); font-weight: 800; margin: 0 0 12px 0; letter-spacing: -0.5px; }
+        p.subtitle { color: var(--text-muted); font-size: clamp(14px, 1.5vw, 16px); margin: 0 0 32px 0; line-height: 1.6; max-width: 550px; }
+
+        /* Sidebar & Nav */
+        .sidebar {
+            width: var(--nav-width); background: var(--bg-sidebar);
+            border-right: 1px solid var(--border); display: flex; flex-direction: column;
+            padding: 30px 20px; z-index: 50; transition: all 0.3s ease;
+        }
         .brand {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin-bottom: 40px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 40px;
+            display: flex; align-items: center; gap: 12px;
             background: linear-gradient(to right, var(--text-main), var(--text-muted));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .brand i { font-size: 28px; color: var(--primary); -webkit-text-fill-color: initial; }
-
-        .theme-toggle {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            width: 45px;
-            height: 45px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            z-index: 100;
-        }
-        .theme-toggle:hover { transform: scale(1.1); border-color: var(--primary); }
-        .theme-toggle i { font-size: 20px; color: var(--primary); }
-
-        .nav-list { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
         
+        .nav-list { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
         .nav-btn {
-            display: flex; align-items: center; gap: 14px;
-            padding: 14px 18px;
-            border-radius: var(--radius-md);
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            font-weight: 500;
-            font-size: 15px;
-            border: 1px solid transparent;
+            display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+            border-radius: var(--radius-md); color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600; font-size: 15px; border: 1px solid transparent;
         }
-        .nav-btn:hover { background: rgba(99, 102, 241, 0.05); color: var(--text-main); }
+        .nav-btn:hover { background: rgba(99, 102, 241, 0.08); color: var(--text-main); }
         .nav-btn.active {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--text-main);
-            border-color: rgba(99, 102, 241, 0.2);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.05);
+            background: rgba(99, 102, 241, 0.12); color: var(--text-main);
+            border-color: rgba(99, 102, 241, 0.25);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
         }
         .nav-btn i { font-size: 20px; transition: transform 0.2s; }
         .nav-btn.active i { color: var(--primary); transform: scale(1.1); }
 
-        .main-content { flex: 1; position: relative; display: flex; flex-direction: column; }
-        
-        .scroll-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 40px;
-            padding-bottom: 150px;
-            scroll-behavior: smooth;
+        /* Theme Toggle */
+        .theme-toggle {
+            position: absolute; top: 30px; right: 30px; width: 44px; height: 44px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease; z-index: 100;
+            box-shadow: var(--shadow-sm); backdrop-filter: blur(10px);
         }
+        .theme-toggle:hover { transform: scale(1.05); border-color: var(--primary); box-shadow: var(--shadow-md); }
+        .theme-toggle i { font-size: 20px; color: var(--text-main); transition: transform 0.5s ease; }
+        .theme-toggle:active i { transform: rotate(180deg); }
 
-        h1 { font-size: 32px; font-weight: 700; margin: 0 0 10px 0; letter-spacing: -1px; }
-        p.subtitle { color: var(--text-muted); font-size: 15px; margin: 0 0 30px 0; line-height: 1.6; max-width: 600px; }
-
+        /* Cards & Inputs */
         .glass-card {
             background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 30px;
-            max-width: 650px;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
-            transition: transform 0.3s;
+            backdrop-filter: blur(24px) saturate(120%); -webkit-backdrop-filter: blur(24px) saturate(120%);
+            border: 1px solid var(--border); border-radius: var(--radius-xl);
+            padding: 32px; max-width: var(--content-max-width);
+            box-shadow: var(--shadow-md); transition: transform 0.3s, box-shadow 0.3s;
+            position: relative; overflow: hidden;
         }
-        
-        .tool-view { display: none; animation: fadeUp 0.4s cubic-bezier(0.2, 1, 0.2, 1); }
-        .tool-view.active { display: block; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        /* Subtle inner glow for cards */
+        .glass-card::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            border-radius: inherit; padding: 1px; 
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
 
-        .input-group { position: relative; margin-bottom: 20px; }
-        
+        .tool-view { display: none; animation: fadeUp 0.4s cubic-bezier(0.2, 1, 0.2, 1) forwards; }
+        .tool-view.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .input-group { position: relative; margin-bottom: 24px; }
         .input-wrapper {
-            position: relative;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            transition: all 0.3s;
-            display: flex; align-items: center;
+            position: relative; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: var(--radius-lg);
+            transition: all 0.3s ease; display: flex; align-items: center;
+            box-shadow: var(--shadow-inner);
         }
+        /* Fix white flash on paste by ensuring background is solid and matches theme */
+        .input-wrapper, input, textarea, select { background-color: var(--bg-input) !important; }
+
         .input-wrapper:focus-within {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-inner);
         }
 
         input, textarea, select {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            padding: 18px 18px 18px 50px;
-            font-size: 16px;
-            font-family: inherit;
+            width: 100%; border: none; color: var(--text-main);
+            padding: 16px 16px 16px 50px; font-size: 16px; font-family: inherit;
+            border-radius: var(--radius-lg); resize: none;
         }
+        input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 0.7; }
         
-        .input-icon { position: absolute; left: 18px; color: var(--text-muted); pointer-events: none; font-size: 20px; display: flex; z-index: 1; }
-        
+        .input-icon { position: absolute; left: 18px; color: var(--text-muted); pointer-events: none; font-size: 22px; display: flex; z-index: 2; transition: color 0.3s; }
+        .input-wrapper:focus-within .input-icon { color: var(--primary); }
+
         .paste-badge {
             position: absolute; right: 12px;
-            background: rgba(99, 102, 241, 0.15);
-            color: var(--primary);
-            font-size: 11px; font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex; align-items: center; gap: 4px;
-            opacity: 1;
-            pointer-events: auto;
+            background: rgba(99, 102, 241, 0.12); color: var(--primary);
+            font-size: 12px; font-weight: 700; padding: 8px 14px;
+            border-radius: var(--radius-sm); cursor: pointer;
+            transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;
+            opacity: 1; pointer-events: auto; z-index: 3;
         }
-        .paste-badge.hidden-badge { opacity: 0; pointer-events: none; }
-        .paste-badge:hover { background: rgba(99, 102, 241, 0.25); transform: scale(1.05); }
+        .paste-badge.hidden-badge { opacity: 0; pointer-events: none; transform: translateX(10px); }
+        .paste-badge:hover { background: rgba(99, 102, 241, 0.2); transform: scale(1.02); }
+        .paste-badge:active { transform: scale(0.95); }
 
+        /* Premium Buttons */
         .btn-premium {
-            width: 100%;
-            padding: 18px;
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 10px 30px -5px var(--primary-glow);
-            transition: all 0.2s;
+            width: 100%; padding: 18px; background: var(--primary-gradient);
+            color: white; border: none; border-radius: var(--radius-lg);
+            font-weight: 700; font-size: 16px; cursor: pointer;
+            box-shadow: var(--shadow-glow); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            position: relative; overflow: hidden;
+            position: relative; overflow: hidden; letter-spacing: 0.5px;
         }
-        .btn-premium:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 15px 35px -5px var(--primary-glow); }
+        .btn-premium:active { transform: scale(0.98) translateY(0); }
         .btn-premium::after {
             content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
-            transform: translateX(-100%); transition: 0.5s;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+            transform: translateX(-100%) skewX(-15deg); transition: 0.6s ease;
         }
-        .btn-premium:hover::after { transform: translateX(100%); }
+        .btn-premium:hover::after { transform: translateX(100%) skewX(-15deg); }
+        .btn-premium.secondary { background: transparent; border: 2px solid var(--border-light); box-shadow: none; color: var(--text-main); }
+        .btn-premium.secondary:hover { border-color: var(--primary); background: rgba(99,102,241,0.05); }
 
-        .result-container {
-            margin-top: 25px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            animation: expand 0.3s ease forwards;
+        /* ---- PREMIUM RESULT DISPLAY ---- */
+        .result-container { margin-top: 30px; animation: fadeUp 0.4s ease forwards; }
+        .result-card {
+            background: var(--bg-card-lighter);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-light); border-radius: var(--radius-xl);
+            overflow: hidden; box-shadow: var(--shadow-lg);
+            position: relative;
         }
-        @keyframes expand { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+        /* Gradient border accent */
+        .result-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--primary-gradient);
+        }
 
-        .result-content {
-            padding: 20px;
-            font-family: 'Monaco', monospace;
-            font-size: 13px;
-            color: var(--primary);
-            word-break: break-all;
-            background: rgba(99, 102, 241, 0.05);
+        .result-link-box {
+            padding: 24px; background: rgba(99, 102, 241, 0.03);
             border-bottom: 1px solid var(--border);
+            cursor: pointer; position: relative;
+            transition: background 0.2s;
         }
+        .result-link-box:hover { background: rgba(99, 102, 241, 0.06); }
+        .result-link-text {
+            font-family: 'Monaco', 'Consolas', monospace; font-size: 14px; color: var(--primary);
+            word-break: break-all; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .click-to-copy-hint {
+            position: absolute; top: 10px; right: 10px; font-size: 10px;
+            color: var(--text-muted); font-weight: 600; opacity: 0; transition: opacity 0.2s;
+        }
+        .result-link-box:hover .click-to-copy-hint { opacity: 0.7; }
 
         .action-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            background: var(--bg-card);
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px;
+            background: var(--bg-card-lighter);
+        }
+        .action-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            padding: 12px; border-radius: var(--radius-lg);
+            cursor: pointer; transition: all 0.2s; color: var(--text-muted);
+            font-size: 12px; font-weight: 600; position: relative; overflow: hidden;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.03);
+        }
+        .action-btn i { font-size: 22px; transition: transform 0.2s; color: var(--text-main); }
+        .action-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); color: var(--text-main); border-color: var(--border); }
+        .action-btn:active { transform: scale(0.95); }
+        
+        /* Color-coded actions */
+        .action-btn.test:hover i { color: var(--success); }
+        .action-btn.copy:hover i { color: #3b82f6; } /* Blue */
+        .action-btn.share:hover i { color: var(--secondary); }
+        .action-btn.qr-act:hover i { color: var(--primary); }
+
+
+        /* ---- LOCAL HISTORY ---- */
+        .history-section { margin-top: 40px; animation: fadeUp 0.5s ease forwards; }
+        .history-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding: 0 10px;
+        }
+        .history-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .history-clear-btn {
+            font-size: 13px; color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; gap: 4px; padding: 6px 12px;
+            border-radius: var(--radius-sm); transition: all 0.2s;
+        }
+        .history-clear-btn:hover { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        
+        .history-list { display: flex; flex-direction: column; gap: 12px; max-height: 350px; overflow-y: auto; padding: 4px; }
+        .history-item {
+            background: var(--bg-card-lighter); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 16px;
+            display: flex; flex-direction: column; gap: 12px;
+            transition: all 0.2s; position: relative;
+        }
+        .history-item:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+        .history-content {
+            font-family: 'Monaco', monospace; font-size: 12px; color: var(--text-main);
+            word-break: break-all; opacity: 0.9;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .history-meta { display: flex; justify-content: space-between; align-items: center; }
+        .history-time { font-size: 12px; color: var(--text-muted); }
+        .history-actions { display: flex; gap: 8px; }
+        .h-act-btn {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: var(--radius-sm); background: var(--bg-input);
+            color: var(--text-muted); cursor: pointer; transition: all 0.2s; border: 1px solid var(--border);
+        }
+        .h-act-btn:hover { color: var(--primary); border-color: var(--primary); background: rgba(99,102,241,0.1); }
+        .h-act-btn.delete:hover { color: var(--error); border-color: var(--error); background: rgba(239,68,68,0.1); }
+
+        /* INTL TEL INPUT OVERRIDES */
+        .iti { width: 100%; display: block; }
+        .iti__flag-container { z-index: 4; }
+        .iti__selected-flag { background: transparent !important; padding: 0 12px 0 16px; border-right: 1px solid var(--border); }
+        .iti__country-list {
+            background: var(--bg-card) !important; border: 1px solid var(--border) !important;
+            backdrop-filter: blur(20px); color: var(--text-main);
+            box-shadow: var(--shadow-lg) !important; border-radius: var(--radius-lg) !important;
+            max-height: 300px; width: 350px; max-width: 90vw;
+        }
+        .iti__country { padding: 12px 16px; transition: background 0.2s; }
+        .iti__country:hover, .iti__country.iti__highlight { background: rgba(99,102,241,0.1) !important; }
+        .iti__search-input {
+            background: var(--bg-input) !important; border: 1px solid var(--border) !important;
+            color: var(--text-main) !important; border-radius: var(--radius-md) !important;
+            padding: 10px !important; margin: 10px !important; width: calc(100% - 20px) !important;
         }
 
-        .action-item {
-            padding: 15px;
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-            font-size: 11px; font-weight: 500; color: var(--text-muted);
-            cursor: pointer; transition: 0.2s;
-            border-right: 1px solid var(--border);
-        }
-        .action-item:last-child { border-right: none; }
-        .action-item:hover { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
-        .action-item i { font-size: 18px; margin-bottom: 2px; }
-        .action-item:active i { transform: scale(0.8); transition: 0.1s; }
-
-        /* Country Code Picker */
-        .phone-input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .country-selector {
-            position: relative;
-            min-width: 120px;
-        }
-
-        .country-selected {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 18px 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s;
-            font-size: 16px;
-        }
-        .country-selected:hover { border-color: var(--primary); }
-        .country-flag { font-size: 24px; }
-        .country-code { color: var(--text-main); font-weight: 500; }
-
-        .country-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            margin-top: 8px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
-            display: none;
-        }
-        .country-dropdown.show { display: block; }
-
-        .country-search {
-            position: sticky;
-            top: 0;
-            background: var(--bg-card);
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-        .country-search input {
-            width: 100%;
-            padding: 10px 15px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-main);
-            font-size: 14px;
-        }
-
-        .country-option {
-            padding: 12px 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: 0.2s;
-        }
-        .country-option:hover { background: rgba(99, 102, 241, 0.1); }
-        .country-name { flex: 1; color: var(--text-main); font-size: 14px; }
-
-        /* Toggle Switch for Cleaner */
+        /* Toggle Switch & QR Grid */
         .toggle-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: var(--bg-input);
-            padding: 6px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
+            display: flex; gap: 8px; margin-bottom: 24px; background: var(--bg-input);
+            padding: 6px; border-radius: var(--radius-lg); border: 1px solid var(--border);
+            box-shadow: var(--shadow-inner);
         }
-
         .toggle-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: var(--text-muted);
+            flex: 1; padding: 12px; border-radius: var(--radius-md); text-align: center;
+            font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.3s ease;
+            color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .toggle-btn.active {
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: 0 5px 15px -3px var(--primary-glow);
+            background: var(--bg-card); color: var(--primary);
+            box-shadow: var(--shadow-sm);
         }
-
-        /* QR Customizer - Mobile Responsive */
+        
         .qr-grid {
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 15px; 
-            margin-top: 20px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px;
         }
-        .qr-option-label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 8px; font-weight: 500; }
-        input[type="color"] { padding: 0; border-radius: 8px; height: 45px; width: 100%; cursor: pointer; border: 1px solid var(--border); }
+        .qr-option-label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 8px; font-weight: 600; }
+        input[type="color"] { padding: 2px; height: 50px; cursor: pointer; }
         .file-upload-btn {
-            background: var(--bg-input); border: 1px dashed var(--border);
-            color: var(--text-muted); padding: 12px; border-radius: 12px;
-            font-size: 13px; cursor: pointer; text-align: center; transition: 0.3s;
+            background: var(--bg-input); border: 2px dashed var(--border);
+            color: var(--text-muted); padding: 0; height: 50px; border-radius: var(--radius-lg);
+            font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.3s; font-weight: 600;
         }
-        .file-upload-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .file-upload-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(99,102,241,0.05); }
 
         #qr-canvas-container {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            min-height: 200px;
+            margin-top: 30px; display: flex; justify-content: center; align-items: center;
+            background: white; padding: 30px; border-radius: var(--radius-xl);
+            min-height: 250px; box-shadow: var(--shadow-inner); position: relative;
         }
-
-        #qrcode-canvas {
-            max-width: 100%;
-            height: auto;
-        }
-
-        #qrcode-canvas canvas {
-            max-width: 100% !important;
-            height: auto !important;
-        }
-
-        #lock-overlay {
-            position: fixed; inset: 0; z-index: 1000;
-            background: var(--bg-root);
+        .qr-loading-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.8);
             display: flex; align-items: center; justify-content: center;
-            padding: 20px;
+            border-radius: inherit; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .qr-loading-overlay.show { opacity: 1; }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .loader { width: 32px; height: 32px; border: 3px solid rgba(99, 102, 241, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast Notification */
+        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .toast {
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border-light); padding: 12px 24px;
+            border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+            color: var(--text-main); font-weight: 600; font-size: 14px;
+            display: flex; align-items: center; gap: 10px;
+            animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--error); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateY(-20px) scale(0.95); } }
+
+        /* ---- MOBILE RESPONSIVENESS (Pixel Perfect) ---- */
+        @media (max-width: 1024px) {
+            .glass-card { padding: 24px; }
         }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; }
+            body { flex-direction: column; height: 100%; /* Allow scroll on body for mobile */ overflow: auto; }
+            #app-layout { height: auto; min-height: 100vh; padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom)); }
+            .main-content { height: auto; }
+            .scroll-area { padding: 20px 16px 40px 16px; overflow: visible; }
             
+            /* Mobile Nav */
             .sidebar {
                 position: fixed; bottom: 0; left: 0; right: 0;
-                width: 100%; height: var(--mobile-nav-height);
-                flex-direction: row; padding: 0; 
-                background: var(--bg-sidebar);
-                backdrop-filter: blur(20px);
-                border-top: 1px solid var(--border); 
-                border-right: none;
-                padding-bottom: env(safe-area-inset-bottom);
-                z-index: 100;
+                width: 100%; height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+                flex-direction: row; padding: 0; background: var(--bg-sidebar);
+                backdrop-filter: blur(24px); border-top: 1px solid var(--border);
+                border-right: none; padding-bottom: env(safe-area-inset-bottom);
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
             }
-            
             .brand { display: none; }
-            
-            .nav-list {
-                flex-direction: row; 
-                overflow-x: auto; 
-                width: 100%; 
-                padding: 0 5px; 
-                gap: 0;
-                justify-content: space-around;
-                align-items: center;
-            }
-            
+            .nav-list { flex-direction: row; overflow-x: auto; width: 100%; padding: 0 8px; gap: 4px; justify-content: space-between; align-items: center; }
             .nav-btn {
-                flex-direction: column; 
-                min-width: 60px; 
-                padding: 8px 5px; 
-                gap: 4px;
-                font-size: 9px; 
-                border: none; 
-                background: transparent !important;
-                border-radius: 0; 
-                box-shadow: none !important;
-                flex: 1;
+                flex-direction: column; min-width: 64px; padding: 8px 4px; gap: 6px;
+                font-size: 10px; border: none; background: transparent !important;
+                border-radius: var(--radius-sm); box-shadow: none !important; flex: 1;
             }
-            .nav-btn.active { color: var(--primary); }
-            .nav-btn i { font-size: 22px; }
+            .nav-btn i { font-size: 24px; }
+            .nav-btn.active i { transform: translateY(-2px); }
+
+            .theme-toggle { top: 16px; right: 16px; }
             
-            .theme-toggle {
-                top: 15px;
-                right: 15px;
-                width: 40px;
-                height: 40px;
-            }
+            /* Mobile Content Adjustments */
+            h1 { margin-top: 10px; }
+            .glass-card { padding: 20px; border-radius: var(--radius-lg); }
             
-            .scroll-area { 
-                padding: 20px 15px 100px 15px; 
-            }
+            .btn-premium { min-height: 48px; }
             
-            .glass-card { 
-                padding: 20px; 
-                max-width: 100%;
-            }
+            .qr-grid { grid-template-columns: 1fr; gap: 12px; }
             
-            h1 { font-size: 24px; }
-            p.subtitle { font-size: 14px; }
+            .action-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             
-            .qr-grid { 
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-            }
-
-            #qr-canvas-container {
-                padding: 15px;
-            }
-
-            .phone-input-wrapper {
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .country-selector {
-                width: 100%;
-            }
-
-            input, textarea {
-                padding: 15px 15px 15px 45px;
-                font-size: 15px;
-            }
-
-            .action-bar {
-                grid-template-columns: repeat(4, 1fr);
-            }
-
-            .action-item {
-                padding: 12px 8px;
-                font-size: 10px;
-            }
+            /* History on mobile */
+            .history-item { padding: 14px; }
+            .history-content { -webkit-line-clamp: 3; font-size: 11px; }
         }
 
-        .hidden { display: none !important; }
-        .loader { width: 24px; height: 24px; border: 3px solid rgba(99, 102, 241, 0.3); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
+        @media (max-width: 374px) {
+            /* Small phones */
+            .nav-btn { min-width: 50px; }
+            .nav-btn i { font-size: 20px; }
+            h1 { font-size: 22px; }
+            .action-bar { gap: 8px; }
+            .action-btn { padding: 10px; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
@@ -537,16 +481,13 @@
                     <i class="ph ph-whatsapp-logo"></i> WhatsApp
                 </div>
                 <div class="nav-btn" onclick="Router.go('qr')">
-                    <i class="ph ph-qr-code"></i> QR
+                    <i class="ph ph-qr-code"></i> QR Tool
                 </div>
                 <div class="nav-btn" onclick="Router.go('youtube')">
                     <i class="ph ph-youtube-logo"></i> YouTube
                 </div>
                 <div class="nav-btn" onclick="Router.go('cleaner')">
                     <i class="ph ph-broom"></i> Cleaner
-                </div>
-                <div class="nav-btn" onclick="Router.go('drive')">
-                    <i class="ph ph-google-drive-logo"></i> Drive
                 </div>
             </div>
         </nav>
@@ -562,35 +503,35 @@
                             <div class="input-wrapper">
                                 <div class="input-icon"><i class="ph ph-link-simple"></i></div>
                                 <input type="text" id="smart-input" placeholder="Paste YouTube, Instagram, or TikTok link..." 
-                                       onfocus="App.handleFocus(this)" oninput="App.handleInput(this)">
+                                       oninput="App.handleInput(this)">
                                 <div class="paste-badge" onclick="App.pasteTo('smart-input')">
                                     <i class="ph-bold ph-clipboard"></i> PASTE
                                 </div>
                             </div>
                         </div>
                         <button class="btn-premium" onclick="Tools.smartLink()">
-                            <span class="btn-text">Generate Deep Link</span>
+                            <i class="ph-bold ph-lightning"></i> Generate Deep Link
                         </button>
                     </div>
                     <div id="smart-result" class="hidden"></div>
+                    <div id="smart-history" class="history-section hidden"></div>
                 </section>
 
                 <section id="password" class="tool-view">
                     <h1>Secure Password Link</h1>
-                    <p class="subtitle">Encrypt a destination URL with a password using AES.</p>
+                    <p class="subtitle">Encrypt a destination URL with a password using AES encryption.</p>
                     <div class="glass-card">
                         <div class="input-group">
                             <label class="qr-option-label">Destination URL</label>
                             <div class="input-wrapper">
                                 <div class="input-icon"><i class="ph ph-globe"></i></div>
-                                <input type="text" id="secure-url" placeholder="https://secret-site.com"
-                                       onfocus="App.handleFocus(this)" oninput="App.handleInput(this)">
+                                <input type="text" id="secure-url" placeholder="https://secret-site.com" oninput="App.handleInput(this)">
                                 <div class="paste-badge" onclick="App.pasteTo('secure-url')">
                                     <i class="ph-bold ph-clipboard"></i> PASTE
                                 </div>
                             </div>
                         </div>
-                        <div class="input-group">
+                        <div class="input-group" style="margin-bottom: 30px;">
                             <label class="qr-option-label">Set a Password</label>
                             <div class="input-wrapper">
                                 <div class="input-icon"><i class="ph ph-key"></i></div>
@@ -598,58 +539,46 @@
                             </div>
                         </div>
                         <button class="btn-premium" onclick="Tools.createSecureLink()">
-                            <span class="btn-text">Encrypt & Generate Link</span>
+                            <i class="ph-bold ph-lock-key-open"></i> Encrypt & Generate
                         </button>
                     </div>
                     <div id="secure-result" class="hidden"></div>
+                    <div id="secure-history" class="history-section hidden"></div>
                 </section>
 
                 <section id="whatsapp" class="tool-view">
                     <h1>WhatsApp Direct</h1>
-                    <p class="subtitle">Create "Click-to-Chat" links without saving the contact.</p>
+                    <p class="subtitle">Create "Click-to-Chat" links without saving the contact number.</p>
                     <div class="glass-card">
-                        <div class="phone-input-wrapper">
-                            <div class="country-selector">
-                                <div class="country-selected" onclick="CountryPicker.toggle()">
-                                    <span class="country-flag" id="selected-flag">🇮🇳</span>
-                                    <span class="country-code" id="selected-code">+91</span>
-                                    <i class="ph ph-caret-down" style="margin-left: auto; color: var(--text-muted);"></i>
-                                </div>
-                                <div class="country-dropdown" id="country-dropdown">
-                                    <div class="country-search">
-                                        <input type="text" id="country-search" placeholder="Search country..." 
-                                               oninput="CountryPicker.search(this.value)">
-                                    </div>
-                                    <div id="country-list"></div>
-                                </div>
-                            </div>
-                            <div class="input-wrapper" style="flex: 1;">
-                                <div class="input-icon"><i class="ph ph-phone"></i></div>
-                                <input type="tel" id="wa-phone" placeholder="Phone number" style="padding-left: 50px;">
+                        <div class="input-group" style="z-index: 20;"> <label class="qr-option-label">Phone Number</label>
+                            <div class="input-wrapper" style="padding: 0; overflow: visible;">
+                                <input type="tel" id="wa-phone" style="padding-left: 16px !important; border-radius: var(--radius-lg);">
                             </div>
                         </div>
-                        <div class="input-group" style="margin-top: 15px;">
+                        <div class="input-group" style="margin-top: 20px;">
+                             <label class="qr-option-label">Pre-filled Message (Optional)</label>
                             <div class="input-wrapper">
-                                <div class="input-icon" style="top:18px"><i class="ph ph-chat-text"></i></div>
-                                <textarea id="wa-text" rows="3" placeholder="Pre-filled message (optional)" style="padding-left: 50px;"></textarea>
+                                <div class="input-icon" style="top:16px"><i class="ph ph-chat-text"></i></div>
+                                <textarea id="wa-text" rows="3" placeholder="Type your message here..." style="padding-left: 50px;"></textarea>
                             </div>
                         </div>
                         <button class="btn-premium" onclick="Tools.waLink()">
-                            <span class="btn-text">Create Chat Link</span>
+                            <i class="ph-bold ph-whatsapp-logo"></i> Create Chat Link
                         </button>
                     </div>
                     <div id="wa-result" class="hidden"></div>
+                    <div id="wa-history" class="history-section hidden"></div>
                 </section>
 
                 <section id="qr" class="tool-view">
                     <h1>Pro QR Designer</h1>
-                    <p class="subtitle">Create stunning, customized QR codes with logos and colors.</p>
+                    <p class="subtitle">Create stunning, customized QR codes that update in real-time.</p>
                     <div class="glass-card">
                         <div class="input-group">
+                            <label class="qr-option-label">QR Content (URL or Text)</label>
                             <div class="input-wrapper">
                                 <div class="input-icon"><i class="ph ph-qr-code"></i></div>
-                                <input type="text" id="qr-input" placeholder="Enter URL or Text..."
-                                       onfocus="App.handleFocus(this)" oninput="App.handleInput(this)">
+                                <input type="text" id="qr-input" placeholder="https://your-site.com" oninput="App.handleInput(this)">
                                 <div class="paste-badge" onclick="App.pasteTo('qr-input')">
                                     <i class="ph-bold ph-clipboard"></i> PASTE
                                 </div>
@@ -658,155 +587,179 @@
                         
                         <div class="qr-grid">
                             <div>
-                                <label class="qr-option-label">Color 1</label>
-                                <input type="color" id="qr-c1" value="#6366f1">
+                                <label class="qr-option-label">Primary Color</label>
+                                <div class="input-wrapper" style="padding: 4px;">
+                                     <input type="color" id="qr-c1" value="#6366f1" style="padding: 0; height: 42px; border-radius: 8px;">
+                                </div>
                             </div>
                             <div>
-                                <label class="qr-option-label">Color 2</label>
-                                <input type="color" id="qr-c2" value="#a855f7">
+                                <label class="qr-option-label">Gradient Color</label>
+                                <div class="input-wrapper" style="padding: 4px;">
+                                    <input type="color" id="qr-c2" value="#a855f7" style="padding: 0; height: 42px; border-radius: 8px;">
+                                </div>
                             </div>
                             <div>
                                 <label class="qr-option-label">Dot Style</label>
-                                <select id="qr-dots" style="padding:12px 15px; width:100%; border:1px solid var(--border); border-radius:12px; background: var(--bg-input); color: var(--text-main);">
-                                    <option value="rounded">Rounded</option>
-                                    <option value="dots">Dots</option>
-                                    <option value="square">Square</option>
-                                    <option value="classy">Classy</option>
-                                </select>
+                                <div class="input-wrapper">
+                                    <select id="qr-dots" style="padding-left: 16px;">
+                                        <option value="rounded">Rounded</option>
+                                        <option value="dots">Dots</option>
+                                        <option value="square">Square</option>
+                                        <option value="classy">Classy</option>
+                                    </select>
+                                </div>
                             </div>
                             <div>
                                 <label class="qr-option-label">Center Logo</label>
-                                <label class="file-upload-btn">
+                                <label class="file-upload-btn" id="qr-logo-label">
                                     <input type="file" id="qr-logo" accept="image/*" style="display:none" onchange="Tools.handleLogo(this)">
-                                    <i class="ph ph-image"></i> Upload
+                                    <i class="ph ph-image-square" style="font-size: 20px;"></i> <span id="qr-logo-text">Upload Logo</span>
                                 </label>
                             </div>
                         </div>
 
                         <div id="qr-canvas-container">
+                            <div class="qr-loading-overlay"><div class="loader"></div></div>
                             <div id="qrcode-canvas"></div>
                         </div>
 
-                        <button class="btn-premium" style="margin-top:20px;" onclick="Tools.generateQR()">
-                            <span class="btn-text">Generate / Update QR</span>
-                        </button>
-                        <button class="btn-premium" style="margin-top:10px; background:rgba(99, 102, 241, 0.1); border:1px solid var(--border); color: var(--primary);" onclick="Tools.downloadQR()">
-                            <span class="btn-text">Download PNG</span>
+                        <button class="btn-premium" style="margin-top:24px;" onclick="Tools.downloadQR()">
+                            <i class="ph-bold ph-download-simple"></i> Download PNG
                         </button>
                     </div>
                 </section>
 
                 <section id="youtube" class="tool-view">
                     <h1>YouTube Timestamp</h1>
-                    <p class="subtitle">Add timestamp to YouTube videos.</p>
+                    <p class="subtitle">Link directly to a specific moment in a YouTube video.</p>
                     <div class="glass-card">
                         <div class="input-group">
+                             <label class="qr-option-label">YouTube URL</label>
                             <div class="input-wrapper">
                                 <div class="input-icon"><i class="ph ph-youtube-logo"></i></div>
-                                <input type="text" id="yt-url" placeholder="Paste YouTube URL"
-                                       onfocus="App.handleFocus(this)" oninput="App.handleInput(this)">
+                                <input type="text" id="yt-url" placeholder="Paste YouTube URL" oninput="App.handleInput(this)">
                                 <div class="paste-badge" onclick="App.pasteTo('yt-url')">
                                     <i class="ph-bold ph-clipboard"></i> PASTE
                                 </div>
                             </div>
                         </div>
-                        <div style="display:flex; gap:15px; margin-bottom:20px;">
+                        <div style="display:flex; gap:15px; margin-bottom:30px;">
                             <div style="flex:1;">
                                 <label class="qr-option-label">Minutes</label>
                                 <div class="input-wrapper">
-                                    <input type="number" id="yt-min" placeholder="0" style="padding-left:15px; text-align:center;">
+                                    <input type="number" id="yt-min" placeholder="0" min="0" style="padding-left:16px; text-align:center; font-weight:600;">
                                 </div>
                             </div>
                             <div style="flex:1;">
                                 <label class="qr-option-label">Seconds</label>
                                 <div class="input-wrapper">
-                                    <input type="number" id="yt-sec" placeholder="0" style="padding-left:15px; text-align:center;">
+                                    <input type="number" id="yt-sec" placeholder="0" min="0" max="59" style="padding-left:16px; text-align:center; font-weight:600;">
                                 </div>
                             </div>
                         </div>
-                        <button class="btn-premium" onclick="Tools.ytLink()">Generate Link</button>
+                        <button class="btn-premium" onclick="Tools.ytLink()">
+                            <i class="ph-bold ph-timer"></i> Generate Link
+                        </button>
                     </div>
                     <div id="yt-result" class="hidden"></div>
+                    <div id="youtube-history" class="history-section hidden"></div>
                 </section>
 
                 <section id="cleaner" class="tool-view">
                     <h1>Link Cleaner</h1>
-                    <p class="subtitle">Remove tracking parameters from URLs.</p>
+                    <p class="subtitle">Remove tracking parameters (UTM, FBCLID, etc.) from URLs.</p>
                     <div class="glass-card">
                         <div class="toggle-container">
-                            <div class="toggle-btn active" onclick="CleanerMode.switch('single')">
-                                <i class="ph ph-link"></i> Single Link
+                            <div class="toggle-btn active" onclick="CleanerMode.switch('single', this)">
+                                <i class="ph-bold ph-link-simple"></i> Single Link
                             </div>
-                            <div class="toggle-btn" onclick="CleanerMode.switch('bulk')">
-                                <i class="ph ph-list-dashes"></i> Bulk Links
+                            <div class="toggle-btn" onclick="CleanerMode.switch('bulk', this)">
+                                <i class="ph-bold ph-list-dashes"></i> Bulk Mode
                             </div>
                         </div>
 
                         <div id="single-cleaner">
                             <div class="input-wrapper">
-                                <div class="input-icon"><i class="ph ph-link-simple"></i></div>
-                                <input type="text" id="clean-single" placeholder="Paste link to clean..."
-                                       onfocus="App.handleFocus(this)" oninput="App.handleInput(this)" style="padding-left: 50px;">
+                                <div class="input-icon"><i class="ph ph-broom"></i></div>
+                                <input type="text" id="clean-single" placeholder="Paste messy link..." oninput="App.handleInput(this)">
                                 <div class="paste-badge" onclick="App.pasteTo('clean-single')">
                                     <i class="ph-bold ph-clipboard"></i> PASTE
                                 </div>
                             </div>
                             <br>
-                            <button class="btn-premium" onclick="Tools.cleanSingle()">Clean Link</button>
+                            <button class="btn-premium" onclick="Tools.cleanSingle()">
+                                <i class="ph-bold ph-sparkle"></i> Clean Link
+                            </button>
                         </div>
 
                         <div id="bulk-cleaner" class="hidden">
                             <div class="input-wrapper">
-                                <div class="input-icon" style="top:18px"><i class="ph ph-list-dashes"></i></div>
-                                <textarea id="clean-bulk" rows="6" placeholder="Paste links here (one per line)..." style="padding-left: 50px;"></textarea>
+                                <div class="input-icon" style="top:16px"><i class="ph ph-stack"></i></div>
+                                <textarea id="clean-bulk" rows="6" placeholder="Paste multiple links (one per line)..." style="padding-left: 50px;"></textarea>
                             </div>
                             <br>
-                            <button class="btn-premium" onclick="Tools.cleanBulk()">Clean All Links</button>
+                            <button class="btn-premium" onclick="Tools.cleanBulk()">
+                                <i class="ph-bold ph-sparkle"></i> Clean All Links
+                            </button>
                         </div>
                     </div>
                     <div id="clean-result" class="hidden"></div>
-                </section>
-
-                <section id="drive" class="tool-view">
-                    <h1>Drive Direct Download</h1>
-                    <p class="subtitle">Convert Google Drive share links to direct download links.</p>
-                    <div class="glass-card">
-                        <div class="input-wrapper">
-                            <div class="input-icon"><i class="ph ph-file-cloud"></i></div>
-                            <input type="text" id="drive-input" placeholder="Google Drive Share Link"
-                                   onfocus="App.handleFocus(this)" oninput="App.handleInput(this)" style="padding-left: 50px;">
-                            <div class="paste-badge" onclick="App.pasteTo('drive-input')">
-                                <i class="ph-bold ph-clipboard"></i> PASTE
-                            </div>
-                        </div>
-                        <br>
-                        <button class="btn-premium" onclick="Tools.driveLink()">Get Direct Link</button>
-                    </div>
-                    <div id="drive-result" class="hidden"></div>
+                     <div id="cleaner-history" class="history-section hidden"></div>
                 </section>
 
             </div>
         </main>
     </div>
+    
+    <div id="toast-container"></div>
 
-    <div id="lock-overlay" class="hidden">
-        <div class="glass-card" style="max-width:350px; text-align:center; animation: zoomIn 0.3s;">
-            <i class="ph-fill ph-lock-key" style="font-size:48px; color:var(--primary); margin-bottom:20px;"></i>
-            <h2 style="margin:0 0 10px 0;">Protected Link</h2>
-            <p style="color:var(--text-muted); font-size:14px;">Enter the password to access this destination.</p>
-            <div class="input-wrapper" style="margin:20px 0;">
-                <input type="password" id="unlock-pass" placeholder="Password" style="text-align:center; padding-left:10px;">
+    <div id="lock-overlay" style="position: fixed; inset: 0; z-index: 1000; background: var(--bg-root); display: flex; align-items: center; justify-content: center; padding: 20px;" class="hidden">
+        <div class="glass-card" style="max-width:400px; text-align:center; animation: zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+            <div style="width: 80px; height: 80px; background: rgba(99,102,241,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                <i class="ph-fill ph-lock-key" style="font-size:40px; color:var(--primary);"></i>
             </div>
-            <button class="btn-premium" id="unlock-btn">Unlock Link</button>
-            <div id="unlock-msg" style="color:#ef4444; font-size:12px; margin-top:10px; display:none;">Incorrect Password</div>
+            <h2 style="margin:0 0 10px 0; font-size: 24px;">Protected Link</h2>
+            <p style="color:var(--text-muted); font-size:15px; line-height: 1.5;">This destination is encrypted. Enter the password to unlock it.</p>
+            <div class="input-wrapper" style="margin:30px 0;">
+                <input type="password" id="unlock-pass" placeholder="Enter Password" style="text-align:center; padding-left:16px; font-weight: 600;">
+            </div>
+            <button class="btn-premium" id="unlock-btn">
+                <i class="ph-bold ph-lock-key-open"></i> Unlock Link
+            </button>
+            <div id="unlock-msg" style="color:var(--error); font-size:13px; margin-top:16px; font-weight: 600; display:none;">
+                <i class="ph-bold ph-warning-circle"></i> Incorrect Password
+            </div>
         </div>
     </div>
 
     <script>
+        // GLOBALS
         let qrCodeObj = null;
         let qrLogoData = null;
+        let qrDebounceTimer;
+        let intlIti = null;
+        let currentToolId = 'smart';
 
-        // Theme Manager
+        // ---- TOAST NOTIFICATIONS ----
+        const Toast = {
+            show: (msg, type = 'success') => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                const icon = type === 'success' ? 'ph-bold ph-check-circle' : 'ph-bold ph-warning-circle';
+                toast.innerHTML = `<i class="${icon}"></i> ${msg}`;
+                container.appendChild(toast);
+                
+                if(navigator.vibrate) navigator.vibrate(type === 'success' ? 10 : [30, 50, 30]);
+
+                setTimeout(() => {
+                    toast.style.animation = 'toastOut 0.3s forwards';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        };
+
+        // ---- THEME MANAGER ----
         const ThemeManager = {
             init: () => {
                 const saved = localStorage.getItem('theme') || 'dark';
@@ -819,7 +772,6 @@
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
                 ThemeManager.updateIcon(next);
-                if(navigator.vibrate) navigator.vibrate(10);
             },
             updateIcon: (theme) => {
                 const icon = document.getElementById('theme-icon');
@@ -827,204 +779,213 @@
             }
         };
 
-        // Country Picker
-        const countries = [
-            {code: '+1', name: 'United States', flag: '🇺🇸'},
-            {code: '+1', name: 'Canada', flag: '🇨🇦'},
-            {code: '+44', name: 'United Kingdom', flag: '🇬🇧'},
-            {code: '+91', name: 'India', flag: '🇮🇳'},
-            {code: '+86', name: 'China', flag: '🇨🇳'},
-            {code: '+81', name: 'Japan', flag: '🇯🇵'},
-            {code: '+49', name: 'Germany', flag: '🇩🇪'},
-            {code: '+33', name: 'France', flag: '🇫🇷'},
-            {code: '+39', name: 'Italy', flag: '🇮🇹'},
-            {code: '+34', name: 'Spain', flag: '🇪🇸'},
-            {code: '+61', name: 'Australia', flag: '🇦🇺'},
-            {code: '+7', name: 'Russia', flag: '🇷🇺'},
-            {code: '+55', name: 'Brazil', flag: '🇧🇷'},
-            {code: '+52', name: 'Mexico', flag: '🇲🇽'},
-            {code: '+82', name: 'South Korea', flag: '🇰🇷'},
-            {code: '+65', name: 'Singapore', flag: '🇸🇬'},
-            {code: '+971', name: 'UAE', flag: '🇦🇪'},
-            {code: '+966', name: 'Saudi Arabia', flag: '🇸🇦'},
-            {code: '+880', name: 'Bangladesh', flag: '🇧🇩'},
-            {code: '+92', name: 'Pakistan', flag: '🇵🇰'}
-        ];
-
-        const CountryPicker = {
-            selectedCountry: countries.find(c => c.code === '+91'),
-            
-            init: () => {
-                const list = document.getElementById('country-list');
-                list.innerHTML = countries.map((c, i) => `
-                    <div class="country-option" onclick="CountryPicker.select(${i})">
-                        <span class="country-flag">${c.flag}</span>
-                        <span class="country-name">${c.name}</span>
-                        <span style="color: var(--text-muted); font-size: 13px;">${c.code}</span>
-                    </div>
-                `).join('');
+        // ---- LOCAL HISTORY MANAGER (NEW) ----
+        const HistoryManager = {
+            save: (toolId, inputSummary, resultUrl) => {
+                if (!resultUrl || resultUrl.includes('textarea')) return; // Don't save bulk results
+                let history = HistoryManager.load(toolId);
+                const newItem = {
+                    id: Date.now(),
+                    timestamp: new Date().getTime(),
+                    input: inputSummary.substring(0, 100) + (inputSummary.length > 100 ? '...' : ''),
+                    result: resultUrl
+                };
+                history.unshift(newItem); // Add to start
+                history = history.slice(0, 20); // Keep last 20
+                localStorage.setItem(`history_${toolId}`, JSON.stringify(history));
+                HistoryManager.render(toolId);
             },
-
-            toggle: () => {
-                const dropdown = document.getElementById('country-dropdown');
-                dropdown.classList.toggle('show');
-                if(dropdown.classList.contains('show')) {
-                    document.getElementById('country-search').focus();
+            load: (toolId) => {
+                const data = localStorage.getItem(`history_${toolId}`);
+                return data ? JSON.parse(data) : [];
+            },
+            deleteItem: (toolId, id) => {
+                let history = HistoryManager.load(toolId);
+                history = history.filter(item => item.id !== id);
+                localStorage.setItem(`history_${toolId}`, JSON.stringify(history));
+                HistoryManager.render(toolId);
+                Toast.show('Item deleted from history');
+            },
+            clear: (toolId) => {
+                if(confirm('Are you sure you want to clear history for this tool?')) {
+                    localStorage.removeItem(`history_${toolId}`);
+                    HistoryManager.render(toolId);
+                    Toast.show('History cleared');
                 }
             },
+            render: (toolId) => {
+                const container = document.getElementById(`${toolId}-history`);
+                if (!container) return;
+                const history = HistoryManager.load(toolId);
+                
+                if (history.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
 
-            select: (index) => {
-                CountryPicker.selectedCountry = countries[index];
-                document.getElementById('selected-flag').textContent = countries[index].flag;
-                document.getElementById('selected-code').textContent = countries[index].code;
-                document.getElementById('country-dropdown').classList.remove('show');
-                if(navigator.vibrate) navigator.vibrate(5);
-            },
-
-            search: (query) => {
-                const filtered = countries.filter(c => 
-                    c.name.toLowerCase().includes(query.toLowerCase()) ||
-                    c.code.includes(query)
-                );
-                const list = document.getElementById('country-list');
-                list.innerHTML = filtered.map((c) => {
-                    const index = countries.indexOf(c);
-                    return `
-                        <div class="country-option" onclick="CountryPicker.select(${index})">
-                            <span class="country-flag">${c.flag}</span>
-                            <span class="country-name">${c.name}</span>
-                            <span style="color: var(--text-muted); font-size: 13px;">${c.code}</span>
+                container.classList.remove('hidden');
+                container.innerHTML = `
+                    <div class="history-header">
+                        <div class="history-title"><i class="ph-bold ph-clock-counter-clockwise"></i> Recent History</div>
+                        <div class="history-clear-btn" onclick="HistoryManager.clear('${toolId}')">
+                            <i class="ph ph-trash"></i> Clear All
                         </div>
-                    `;
-                }).join('');
+                    </div>
+                    <div class="history-list">
+                        ${history.map(item => `
+                            <div class="history-item" id="hist-${item.id}">
+                                <div class="history-content" style="color:var(--text-muted); font-size:11px;">Input: ${item.input}</div>
+                                <div class="history-content" style="font-weight:600;">${item.result}</div>
+                                <div class="history-meta">
+                                    <div class="history-time">${HistoryManager.timeAgo(item.timestamp)}</div>
+                                    <div class="history-actions">
+                                        <div class="h-act-btn" onclick="Actions.copy('${item.result.replace(/'/g, "\\'")}')" title="Copy Link">
+                                            <i class="ph-bold ph-copy"></i>
+                                        </div>
+                                         <div class="h-act-btn" onclick="Actions.share('${item.result.replace(/'/g, "\\'")}')" title="Share Link">
+                                            <i class="ph-bold ph-share-network"></i>
+                                        </div>
+                                        <div class="h-act-btn delete" onclick="HistoryManager.deleteItem('${toolId}', ${item.id})" title="Delete">
+                                            <i class="ph-bold ph-x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            },
+            timeAgo: (timestamp) => {
+                const seconds = Math.floor((new Date() - timestamp) / 1000);
+                let interval = seconds / 31536000;
+                if (interval > 1) return Math.floor(interval) + " years ago";
+                interval = seconds / 2592000;
+                if (interval > 1) return Math.floor(interval) + " months ago";
+                interval = seconds / 86400;
+                if (interval > 1) return Math.floor(interval) + " days ago";
+                interval = seconds / 3600;
+                if (interval > 1) return Math.floor(interval) + " hours ago";
+                interval = seconds / 60;
+                if (interval > 1) return Math.floor(interval) + " mins ago";
+                return Math.floor(seconds) < 10 ? "Just now" : Math.floor(seconds) + " seconds ago";
             }
         };
 
-        // Cleaner Mode Toggle
+        // ---- APP LOGIC ----
         const CleanerMode = {
-            current: 'single',
-            switch: (mode) => {
-                CleanerMode.current = mode;
+            switch: (mode, btn) => {
                 document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                event.target.closest('.toggle-btn').classList.add('active');
-                
-                if(mode === 'single') {
-                    document.getElementById('single-cleaner').classList.remove('hidden');
-                    document.getElementById('bulk-cleaner').classList.add('hidden');
-                } else {
-                    document.getElementById('single-cleaner').classList.add('hidden');
-                    document.getElementById('bulk-cleaner').classList.remove('hidden');
-                }
-                if(navigator.vibrate) navigator.vibrate(5);
+                btn.classList.add('active');
+                document.getElementById('single-cleaner').classList.toggle('hidden', mode !== 'single');
+                document.getElementById('bulk-cleaner').classList.toggle('hidden', mode !== 'bulk');
             }
         };
 
         const Router = {
             go: (id) => {
+                currentToolId = id;
                 document.querySelectorAll('.tool-view').forEach(e => e.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
-                
                 document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
                 const btn = document.querySelector(`.nav-btn[onclick*="'${id}'"]`);
                 if(btn) btn.classList.add('active');
-                
-                if(navigator.vibrate) navigator.vibrate(5);
+                // Load History for the new tool
+                if(id !== 'qr') HistoryManager.render(id);
             }
         };
 
         const App = {
             init: () => {
                 ThemeManager.init();
-                CountryPicker.init();
+                App.checkUrlParams();
+                App.initWhatsAppPicker();
+                App.initQRDesigner();
+                
+                // Initialize history for the default view
+                HistoryManager.render('smart');
 
-                // Close dropdowns when clicking outside
-                document.addEventListener('click', (e) => {
-                    if(!e.target.closest('.country-selector')) {
-                        document.getElementById('country-dropdown').classList.remove('show');
+                // Global input handlers for "paste badge" visibility
+                document.addEventListener('input', (e) => {
+                    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                         App.handleInput(e.target);
                     }
                 });
+            },
 
-                const p = new URLSearchParams(window.location.search);
-                
-                if(p.has('safe')) {
-                    document.getElementById('app-layout').classList.add('hidden');
-                    document.getElementById('lock-overlay').classList.remove('hidden');
-                    
-                    document.getElementById('unlock-btn').onclick = () => {
-                        const pass = document.getElementById('unlock-pass').value;
-                        const cipher = p.get('safe');
-                        try {
-                            const bytes = CryptoJS.AES.decrypt(cipher.replace(/ /g, '+'), pass);
-                            const originalUrl = bytes.toString(CryptoJS.enc.Utf8);
-                            if(originalUrl.startsWith('http')) {
-                                window.location.href = originalUrl;
-                            } else {
-                                throw new Error();
-                            }
-                        } catch(e) {
-                            const msg = document.getElementById('unlock-msg');
-                            msg.style.display = 'block';
-                            msg.innerText = 'Incorrect password';
-                            if(navigator.vibrate) navigator.vibrate([50,50,50]);
-                        }
-                    };
-                    return;
-                }
+            initWhatsAppPicker: () => {
+                const input = document.querySelector("#wa-phone");
+                intlIti = window.intlTelInput(input, {
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+                    initialCountry: "auto",
+                    geoIpLookup: callback => {
+                        fetch("https://ipapi.co/json")
+                            .then(res => res.json())
+                            .then(data => callback(data.country_code))
+                            .catch(() => callback("us"));
+                    },
+                    separateDialCode: true,
+                    nationalMode: false,
+                    formatOnDisplay: true,
+                    autoPlaceholder: "aggressive"
+                });
+            },
 
-                if(p.has('u')) {
-                    document.getElementById('app-layout').classList.add('hidden');
-                    const encoded = p.get('u');
-                    const url = atob(encoded.replace(/-/g, '+').replace(/_/g, '/'));
-                    App.handleSmartRedirect(url);
-                    return;
-                }
-
+            initQRDesigner: () => {
                 qrCodeObj = new QRCodeStyling({
-                    width: 300, height: 300,
-                    data: "https://linktoolshub.app",
+                    width: 300, height: 300, data: "https://linktoolshub.app",
                     dotsOptions: { color: "#6366f1", type: "rounded" },
                     backgroundOptions: { color: "#ffffff" }
                 });
                 qrCodeObj.append(document.getElementById("qrcode-canvas"));
+
+                // Real-time listeners with debounce
+                const qrElements = ['qr-input', 'qr-c1', 'qr-c2', 'qr-dots'];
+                qrElements.forEach(id => {
+                    document.getElementById(id).addEventListener('input', App.debounceQRUpdate);
+                    document.getElementById(id).addEventListener('change', App.debounceQRUpdate); // For select and color pickers
+                });
+                
+                // Initial generation
+                setTimeout(Tools.generateQR, 500);
             },
 
-            handleSmartRedirect: (url) => {
-                let finalUrl = url;
-                if(/android/i.test(navigator.userAgent)) {
-                    if(url.includes('youtube')) {
-                         const vid = url.match(/(?:v=|youtu\.be\/)([^&]+)/)?.[1];
-                         if(vid) finalUrl = `intent://${vid}#Intent;scheme=vnd.youtube;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(url)};end`;
-                    } else if(url.includes('instagram')) {
-                         finalUrl = `intent://instagram.com#Intent;scheme=https;package=com.instagram.android;S.browser_fallback_url=${encodeURIComponent(url)};end`;
-                    }
-                }
-                window.location.href = finalUrl;
+            debounceQRUpdate: () => {
+                document.querySelector('.qr-loading-overlay').classList.add('show');
+                clearTimeout(qrDebounceTimer);
+                qrDebounceTimer = setTimeout(() => {
+                    Tools.generateQR();
+                    document.querySelector('.qr-loading-overlay').classList.remove('show');
+                }, 400); // 400ms debounce
             },
 
-            handleFocus: async (input) => {
-                if(!input.value) {
-                    try {
-                        const text = await navigator.clipboard.readText();
-                        if(text && (text.startsWith('http://') || text.startsWith('https://'))) {
-                            input.value = text;
-                            App.handleInput(input);
-                            if(navigator.vibrate) navigator.vibrate(10);
+            checkUrlParams: () => {
+                const p = new URLSearchParams(window.location.search);
+                if(p.has('safe')) {
+                    document.getElementById('app-layout').classList.add('hidden');
+                    document.getElementById('lock-overlay').classList.remove('hidden');
+                    document.getElementById('unlock-btn').onclick = () => {
+                        const pass = document.getElementById('unlock-pass').value;
+                        try {
+                            const bytes = CryptoJS.AES.decrypt(p.get('safe').replace(/ /g, '+'), pass);
+                            const originalUrl = bytes.toString(CryptoJS.enc.Utf8);
+                            if(originalUrl.startsWith('http')) window.location.href = originalUrl;
+                            else throw new Error();
+                        } catch(e) {
+                            document.getElementById('unlock-msg').style.display = 'block';
+                            if(navigator.vibrate) navigator.vibrate([50,50,50]);
                         }
-                    } catch (err) {
-                        // Silent fail if clipboard permission denied
-                    }
+                    };
+                } else if(p.has('u')) {
+                    document.getElementById('app-layout').classList.add('hidden');
+                    const url = atob(p.get('u').replace(/-/g, '+').replace(/_/g, '/'));
+                    // Simple redirect for now, deep linking logic can be complex to auto-detect reliably without server component
+                    window.location.href = url; 
                 }
             },
 
             handleInput: (input) => {
                 const badge = input.parentElement.querySelector('.paste-badge');
-                if(badge) {
-                    if(input.value.trim()) {
-                        badge.classList.add('hidden-badge');
-                    } else {
-                        badge.classList.remove('hidden-badge');
-                    }
-                }
+                if(badge) badge.classList.toggle('hidden-badge', !!input.value.trim());
             },
 
             pasteTo: async (id) => {
@@ -1033,76 +994,89 @@
                     const input = document.getElementById(id);
                     input.value = text;
                     App.handleInput(input);
-                    if(navigator.vibrate) navigator.vibrate(10);
+                    // Trigger input event for QR real-time update
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    Toast.show('Pasted from clipboard');
                 } catch (err) {
-                    alert('Please allow clipboard permission');
+                    Toast.show('Clipboard access denied', 'error');
                 }
             }
         };
 
         const Tools = {
-            render: (id, text, isBulk = false) => {
+            // Premium Result Renderer
+            render: (id, text, isBulk = false, inputSummary = '') => {
                 const div = document.getElementById(id);
                 div.classList.remove('hidden');
-                
-                div.innerHTML = `<div style="text-align:center; padding:20px;"><div class="loader" style="margin:0 auto;"></div></div>`;
+                div.innerHTML = `<div style="text-align:center; padding:30px;"><div class="loader" style="margin:0 auto;"></div></div>`;
                 
                 setTimeout(() => {
                     const safe = text.replace(/'/g, "\\'");
-                    const display = isBulk 
-                        ? `<textarea readonly style="width:100%; height:120px; background:transparent; border:none; color:var(--primary); font-family:monospace; font-size:12px; padding: 15px;">${text}</textarea>` 
-                        : text;
+                    let contentHtml = '';
                     
+                    if(isBulk) {
+                        contentHtml = `<textarea readonly style="width:100%; height:150px; background:transparent; border:none; color:var(--primary); font-family:'Monaco', monospace; font-size:12px; padding:0; resize:none;">${text}</textarea>`;
+                    } else {
+                        contentHtml = `
+                            <div class="result-link-box" onclick="Actions.copy('${safe}')">
+                                <div class="click-to-copy-hint">Click to Copy</div>
+                                <div class="result-link-text">${text}</div>
+                            </div>`;
+                        // Save to history only for single links
+                        HistoryManager.save(currentToolId, inputSummary, text);
+                    }
+
                     div.innerHTML = `
                         <div class="result-container">
-                            <div class="result-content">${display}</div>
-                            <div class="action-bar">
-                                <div class="action-item" onclick="window.open('${safe}', '_blank')">
-                                    <i class="ph-bold ph-arrow-square-out"></i> Test
-                                </div>
-                                <div class="action-item" onclick="Actions.copy('${safe}')">
-                                    <i class="ph-bold ph-copy"></i> Copy
-                                </div>
-                                <div class="action-item" onclick="Actions.share('${safe}')">
-                                    <i class="ph-bold ph-share-network"></i> Share
-                                </div>
-                                <div class="action-item" onclick="Router.go('qr'); document.getElementById('qr-input').value='${safe}'; Tools.generateQR()">
-                                    <i class="ph-bold ph-qr-code"></i> QR
+                            <div class="result-card">
+                                ${contentHtml}
+                                <div class="action-bar">
+                                    <div class="action-btn test" onclick="window.open('${safe}', '_blank')">
+                                        <i class="ph-bold ph-arrow-square-out"></i> Test Link
+                                    </div>
+                                    <div class="action-btn copy" onclick="Actions.copy('${safe}')">
+                                        <i class="ph-bold ph-copy"></i> Copy
+                                    </div>
+                                    <div class="action-btn share" onclick="Actions.share('${safe}')">
+                                        <i class="ph-bold ph-share-network"></i> Share
+                                    </div>
+                                    <div class="action-btn qr-act" onclick="Router.go('qr'); document.getElementById('qr-input').value='${safe}'; document.getElementById('qr-input').dispatchEvent(new Event('input'));">
+                                        <i class="ph-bold ph-qr-code"></i> Create QR
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
-                }, 400);
+                    // Scroll result into view on mobile
+                    if(window.innerWidth < 768) div.scrollIntoView({behavior: "smooth", block: "nearest"});
+                }, 300);
             },
 
             smartLink: () => {
                 const inp = document.getElementById('smart-input').value.trim();
-                if(!inp) return alert('Please enter a link');
+                if(!inp) return Toast.show('Please enter a link first', 'error');
                 const encoded = btoa(inp).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                 const final = `${window.location.origin}${window.location.pathname}?u=${encoded}`;
-                Tools.render('smart-result', final);
+                Tools.render('smart-result', final, false, inp);
             },
 
             createSecureLink: () => {
                 const url = document.getElementById('secure-url').value.trim();
                 const pass = document.getElementById('secure-pass').value.trim();
-                
-                if(!url || !pass) return alert('Please enter URL and Password');
-                
+                if(!url || !pass) return Toast.show('URL and Password required', 'error');
                 try {
                     const encrypted = CryptoJS.AES.encrypt(url, pass).toString();
                     const final = `${window.location.origin}${window.location.pathname}?safe=${encodeURIComponent(encrypted)}`;
-                    Tools.render('secure-result', final);
-                } catch(e) { alert('Encryption failed'); }
+                    Tools.render('secure-result', final, false, url);
+                } catch(e) { Toast.show('Encryption failed', 'error'); }
             },
 
             waLink: () => {
-                const code = CountryPicker.selectedCountry.code.replace('+', '');
-                const ph = document.getElementById('wa-phone').value.replace(/[^0-9]/g, '');
+                if(!intlIti.isValidNumber()) return Toast.show('Invalid phone number', 'error');
+                const fullNum = intlIti.getNumber(intlTelInputUtils.numberFormat.E164).substring(1); // Remove +
                 const txt = document.getElementById('wa-text').value;
-                if(!ph) return alert('Enter phone number');
-                const full = code + ph;
-                Tools.render('wa-result', `https://wa.me/${full}?text=${encodeURIComponent(txt)}`);
+                const final = `https://wa.me/${fullNum}?text=${encodeURIComponent(txt)}`;
+                Tools.render('wa-result', final, false, `+${fullNum} ${txt}`);
             },
 
             handleLogo: (input) => {
@@ -1110,7 +1084,8 @@
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         qrLogoData = e.target.result;
-                        Tools.generateQR();
+                        document.getElementById('qr-logo-text').textContent = input.files[0].name.substring(0, 12) + '...';
+                        App.debounceQRUpdate(); // Trigger update
                     }
                     reader.readAsDataURL(input.files[0]);
                 }
@@ -1124,21 +1099,11 @@
                 
                 qrCodeObj.update({
                     data: txt,
-                    dotsOptions: {
-                        color: c1,
-                        type: dots,
-                        gradient: {
-                            type: 'linear',
-                            colorStops: [{ offset: 0, color: c1 }, { offset: 1, color: c2 }]
-                        }
-                    },
+                    dotsOptions: { color: c1, type: dots, gradient: { type: 'linear', colorStops: [{ offset: 0, color: c1 }, { offset: 1, color: c2 }] } },
                     cornersSquareOptions: { color: c1, type: dots === 'dots' ? 'dot' : 'square' },
+                    cornersDotOptions: { color: c1, type: dots === 'dots' ? 'dot' : 'square' },
                     image: qrLogoData,
-                    imageOptions: {
-                        crossOrigin: "anonymous",
-                        margin: 10,
-                        imageSize: 0.4
-                    }
+                    imageOptions: { crossOrigin: "anonymous", margin: 12, imageSize: 0.35 }
                 });
             },
 
@@ -1148,67 +1113,53 @@
                 const url = document.getElementById('yt-url').value;
                 const min = document.getElementById('yt-min').value || 0;
                 const sec = document.getElementById('yt-sec').value || 0;
-                if(!url) return alert('Please enter YouTube URL');
+                if(!url) return Toast.show('Please enter YouTube URL', 'error');
                 const totalSec = (parseInt(min) * 60) + parseInt(sec);
-                let clean = url.split('&t=')[0]; 
+                let clean = url.split(/[?&]t=/)[0];
                 const symbol = clean.includes('?') ? '&' : '?';
-                Tools.render('yt-result', `${clean}${symbol}t=${totalSec}s`);
+                const final = `${clean}${symbol}t=${totalSec}s`;
+                Tools.render('yt-result', final, false, url + ` (${min}m ${sec}s)`);
             },
 
             cleanSingle: () => {
                 const raw = document.getElementById('clean-single').value.trim();
-                if(!raw) return alert('Please enter a link');
+                if(!raw) return Toast.show('Please enter a link', 'error');
                 const cleaned = Tools.cleanUrl(raw);
-                Tools.render('clean-result', cleaned);
+                Tools.render('clean-result', cleaned, false, raw);
             },
 
             cleanBulk: () => {
                 const raw = document.getElementById('clean-bulk').value;
-                if(!raw) return alert('Please enter links');
-                const cleaned = raw.split('\n')
-                    .map(line => Tools.cleanUrl(line.trim()))
-                    .filter(x => x)
-                    .join('\n');
+                if(!raw) return Toast.show('Please enter links', 'error');
+                const cleaned = raw.split('\n').map(line => Tools.cleanUrl(line.trim())).filter(x => x).join('\n');
                 Tools.render('clean-result', cleaned, true);
             },
 
             cleanUrl: (url) => {
                 try {
-                    const bad = ['utm_', 'fbclid', 'gclid', 'si', 'igshid', 'ref'];
+                    if(!url.startsWith('http')) return url;
+                    const bad = ['utm_', 'fbclid', 'gclid', 'si', 'igshid', 'ref', 'yclid', '_hsenc', '_hsmi', 'mc_cid', 'mc_eid'];
                     const u = new URL(url);
                     const p = new URLSearchParams(u.search);
-                    [...p.keys()].forEach(k => { 
-                        if(bad.some(b => k.startsWith(b))) p.delete(k); 
-                    });
+                    [...p.keys()].forEach(k => { if(bad.some(b => k.startsWith(b))) p.delete(k); });
                     u.search = p.toString();
                     return u.toString();
-                } catch(e) { 
-                    return ''; 
-                }
-            },
-
-            driveLink: () => {
-                const u = document.getElementById('drive-input').value;
-                if(!u) return alert('Please enter Google Drive link');
-                const id = u.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || u.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
-                if(id) Tools.render('drive-result', `https://drive.google.com/uc?export=download&id=${id}`);
-                else alert('Invalid Drive link');
+                } catch(e) { return url; }
             }
         };
 
         const Actions = {
             copy: (t) => {
-                navigator.clipboard.writeText(t).then(() => {
-                    if(navigator.vibrate) navigator.vibrate(10);
-                });
+                navigator.clipboard.writeText(t).then(() => Toast.show('Link copied to clipboard!'));
             },
             share: (t) => {
-                if(navigator.share) navigator.share({url:t});
+                if(navigator.share) navigator.share({url:t}).catch(()=>{}); // Catch share cancellation
                 else Actions.copy(t);
             }
         };
 
-        App.init();
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', App.init);
     </script>
 </body>
 </html>
